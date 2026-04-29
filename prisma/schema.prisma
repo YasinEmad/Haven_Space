@@ -40,13 +40,31 @@ model Property {
 }
 
 model Lead {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   property   Property? @relation(fields: [propertyId], references: [id])
   propertyId Int?
   name       String
   phone      String?
   email      String?
   notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Payment {
+  id               Int      @id @default(autoincrement())
+  transactionId    String   @unique
+  amount           Float
+  currency         String
+  status           String   @default("completed")
+  fullName         String
+  email            String
+  cardLast4        String
+  billingAddress   String
+  billingCity      String
+  billingZipCode   String
+  propertyName     String?
+  paymentType      String
+  installmentAmount String?
+  createdAt        DateTime @default(now())
 }

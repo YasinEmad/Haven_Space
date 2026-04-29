@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentFormSchema, PaymentFormData } from '@/lib/payment-validation';
-import { paymentHistory } from '@/lib/payment-service';
+import { prisma } from '@/lib/prisma';
 
 interface PaymentRequest {
   amount: number;
@@ -81,13 +81,23 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // Store in payment history
-    paymentHistory.add({
-      success: true,
-      transactionId,
-      amount: body.amount,
-      timestamp: new Date(),
-      payerInfo: body.paymentData,
+    // Store payment in database
+    await prisma.payment.create({
+      data: {
+        transactionId,
+        amount: body.amount,
+        currency: body.currency || 'SAR',
+        status: 'completed',
+        fullName: body.paymentData.fullName,
+        email: body.paymentData.email,
+        cardLast4: body.paymentData.cardNumber.slice(-4),
+        billingAddress: body.paymentData.billingAddress,
+        billingCity: body.paymentData.billingCity,
+        billingZipCode: body.paymentData.billingZipCode,
+        propertyName: body.paymentData.propertyName || null,
+        paymentType: body.paymentData.paymentType,
+        installmentAmount: body.paymentData.installmentAmount || null,
+      },
     });
 
     return NextResponse.json(paymentResult, { status: 200 });
@@ -109,21 +119,26 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const history = paymentHistory.getAll();
+    const payments = await prisma.payment.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
     return NextResponse.json(
       {
         success: true,
-        count: history.length,
-        transactions: history.map(item => ({
-          transactionId: item.transactionId,
-          amount: item.amount,
-          currency: item.currency,
-          timestamp: item.timestamp.toISOString(),
-          payerEmail: item.payerInfo.email,
-          payerName: item.payerInfo.fullName,
-          propertyName: item.payerInfo.propertyName,
-          paymentType: item.payerInfo.paymentType,
-          installmentAmount: item.payerInfo.installmentAmount,
+        count: payments.length,
+        transactions: payments.map((payment) => ({
+          transactionId: payment.transactionId,
+          amount: payment.amount,
+          currency: payment.currency,
+          timestamp: payment.createdAt.toISOString(),
+          payerEmail: payment.email,
+          payerName: payment.fullName,
+          propertyName: payment.propertyName,
+          paymentType: payment.paymentType,
+          installmentAmount: payment.installmentAmount,
         })),
       },
       { status: 200 }
