@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Property" ALTER COLUMN "imageUrls" SET NOT NULL,
+ALTER COLUMN "imageUrls" SET DEFAULT '[]',
+ALTER COLUMN "imageUrls" SET DATA TYPE TEXT;

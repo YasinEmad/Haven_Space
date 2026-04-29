@@ -1,0 +1,41 @@
+# v0 runtime files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# dotenv environment variables
+.env
+.env.*.local
+.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Development files
+coverage/
+build/
+dist/
+
+# IDEs
+.vscode/
+.idea/
