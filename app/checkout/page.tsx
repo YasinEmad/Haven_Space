@@ -64,44 +64,16 @@ function Reveal({
 }
 
 /* ---------- Data ---------- */
-const paymentOptions = [
-  {
-    id: 'listing',
-    title: 'Property Listing Fee',
-    description: 'Publish your property in our premium listings.',
-    amount: 199.99,
-  },
-  {
-    id: 'deposit',
-    title: 'Security Deposit',
-    description: 'Reserve your service or property with confidence.',
-    amount: 799.0,
-  },
-  {
-    id: 'subscription',
-    title: 'Premium Membership',
-    description: 'Unlock exclusive offers and advanced benefits.',
-    amount: 49.99,
-  },
-] as const;
-
-type PaymentOption = (typeof paymentOptions)[number];
+const paymentAmount = 199.99;
 
 /* ---------- Page ---------- */
 export default function CheckoutPage() {
-  const [selectedOption, setSelectedOption] = useState<PaymentOption>(
-    paymentOptions[0]
-  );
   const [lastTransaction, setLastTransaction] =
     useState<PaymentFormData | null>(null);
-  const [lastOption, setLastOption] = useState<PaymentOption>(
-    paymentOptions[0]
-  );
-  const [lastPaidAmount, setLastPaidAmount] = useState<number>(paymentOptions[0].amount);
+  const [lastPaidAmount, setLastPaidAmount] = useState<number>(paymentAmount);
 
   const handlePaymentSuccess = (data: PaymentFormData, paidAmount: number) => {
     setLastTransaction(data);
-    setLastOption(selectedOption);
     setLastPaidAmount(paidAmount);
 
     paymentHistory.add({
@@ -145,49 +117,11 @@ export default function CheckoutPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Options */}
-            <Reveal delay={100}>
-              <div>
-                <h2 className="text-2xl font-semibold mb-5">
-                  Choose Your Payment
-                </h2>
-
-                <div className="grid md:grid-cols-3 gap-4">
-                  {paymentOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setSelectedOption(option)}
-                      className={`rounded-3xl p-6 text-left border transition-all duration-300 ${
-                        selectedOption.id === option.id
-                          ? 'border-blue-400/60 bg-blue-500/10 shadow-xl shadow-blue-500/10'
-                          : 'border-white/10 bg-white/5 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <CreditCard className="w-5 h-5 text-white/70" />
-                        <span className="text-emerald-400 font-bold">
-                          ${option.amount}
-                        </span>
-                      </div>
-
-                      <h3 className="font-semibold text-lg mb-2">
-                        {option.title}
-                      </h3>
-
-                      <p className="text-sm text-white/60">
-                        {option.description}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-
             {/* Form */}
             <Reveal delay={200}>
               <div className="rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-2xl p-8 md:p-10">
                 <PaymentForm
-                  amount={selectedOption.amount}
+                  amount={paymentAmount}
                   currency="USD"
                   onSuccess={handlePaymentSuccess}
                 />
@@ -209,7 +143,7 @@ export default function CheckoutPage() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between text-white/70">
                     <span>Service</span>
-                    <span>{selectedOption.title}</span>
+                    <span>Payment</span>
                   </div>
 
                   <div className="flex justify-between text-white/70">
@@ -219,7 +153,7 @@ export default function CheckoutPage() {
 
                   <div className="border-t border-white/10 pt-4 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${selectedOption.amount}</span>
+                    <span>${paymentAmount}</span>
                   </div>
                 </CardContent>
               </Card>
