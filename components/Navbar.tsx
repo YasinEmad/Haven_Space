@@ -49,6 +49,7 @@ export default function Navbar() {
     { name: 'Gallery', href: '/gallery' },
     { name: 'About Us', href: '/about' },
     { name: 'Contact', href: '/connect' },
+    { name: 'Checkout', href: '/checkout' },
   ];
 
   const isActive = (path: string) => pathname === path;
