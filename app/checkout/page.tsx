@@ -131,34 +131,6 @@ export default function CheckoutPage() {
 
           {/* Right Sidebar */}
           <div className="space-y-6">
-            {/* Summary */}
-            <Reveal delay={250}>
-              <Card className="bg-white/5 border-white/10 rounded-3xl backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl text-white">
-                    Order Summary
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between text-white/70">
-                    <span>Service</span>
-                    <span>Payment</span>
-                  </div>
-
-                  <div className="flex justify-between text-white/70">
-                    <span>Processing</span>
-                    <span>Instant</span>
-                  </div>
-
-                  <div className="border-t border-white/10 pt-4 flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>${paymentAmount}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Reveal>
-
             {/* Success */}
             {lastTransaction && (
               <Reveal delay={300}>
