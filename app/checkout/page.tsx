@@ -97,15 +97,18 @@ export default function CheckoutPage() {
   const [lastOption, setLastOption] = useState<PaymentOption>(
     paymentOptions[0]
   );
+  const [lastPaidAmount, setLastPaidAmount] = useState<number>(paymentOptions[0].amount);
 
-  const handlePaymentSuccess = (data: PaymentFormData) => {
+  const handlePaymentSuccess = (data: PaymentFormData, paidAmount: number) => {
     setLastTransaction(data);
     setLastOption(selectedOption);
+    setLastPaidAmount(paidAmount);
 
     paymentHistory.add({
       success: true,
       transactionId: `TXN-${Date.now()}`,
-      amount: selectedOption.amount,
+      amount: paidAmount,
+      currency: 'USD',
       timestamp: new Date(),
       payerInfo: data,
     });

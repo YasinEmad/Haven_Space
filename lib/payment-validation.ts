@@ -42,8 +42,25 @@ export const paymentFormSchema = z.object({
     .min(2, { message: 'يجب كتابة اسم العقار' })
     .max(100, { message: 'اسم العقار طويل جداً' }),
   paymentType: z.enum(['full', 'installment']),
+  paymentAmount: z.string().optional(),
   installmentAmount: z.string().optional(),
 }).superRefine((data, ctx) => {
+  if (data.paymentType === 'full') {
+    if (!data.paymentAmount?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['paymentAmount'],
+        message: 'Please enter the full payment amount',
+      });
+    } else if (Number.isNaN(Number(data.paymentAmount)) || Number(data.paymentAmount) <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['paymentAmount'],
+        message: 'Amount must be a positive number',
+      });
+    }
+  }
+
   if (data.paymentType === 'installment') {
     if (!data.installmentAmount?.trim()) {
       ctx.addIssue({

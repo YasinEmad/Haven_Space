@@ -75,6 +75,9 @@ export async function POST(request: NextRequest) {
         email: body.paymentData.email,
         cardLast4: body.paymentData.cardNumber.slice(-4),
         billingCity: body.paymentData.billingCity,
+        propertyName: body.paymentData.propertyName,
+        paymentType: body.paymentData.paymentType,
+        installmentAmount: body.paymentData.installmentAmount,
       },
     };
 
@@ -114,9 +117,13 @@ export async function GET() {
         transactions: history.map(item => ({
           transactionId: item.transactionId,
           amount: item.amount,
+          currency: item.currency,
           timestamp: item.timestamp.toISOString(),
           payerEmail: item.payerInfo.email,
           payerName: item.payerInfo.fullName,
+          propertyName: item.payerInfo.propertyName,
+          paymentType: item.payerInfo.paymentType,
+          installmentAmount: item.payerInfo.installmentAmount,
         })),
       },
       { status: 200 }

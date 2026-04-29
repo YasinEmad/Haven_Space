@@ -4,6 +4,7 @@ export interface PaymentResult {
   success: boolean;
   transactionId: string;
   amount: number;
+  currency: string;
   timestamp: Date;
   payerInfo: PaymentFormData;
 }
@@ -35,6 +36,7 @@ export const mockPaymentService: PaymentService = {
       success: true,
       transactionId,
       amount,
+      currency: 'USD',
       timestamp: new Date(),
       payerInfo: data,
     };

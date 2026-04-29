@@ -18,7 +18,8 @@ import {
   TrendingUp, 
   ExternalLink,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -73,14 +74,19 @@ export default function AdminDashboard() {
     pendingProperties: 0,
   });
   const [leadCount, setLeadCount] = useState(0);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [paymentCount, setPaymentCount] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [leadsLoading, setLeadsLoading] = useState(true);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [leads, setLeads] = useState<any[]>([]);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
     fetchLeads();
+    fetchPayments();
   }, []);
 
   const fetchStats = async () => {
@@ -117,6 +123,30 @@ export default function AdminDashboard() {
       console.error('Error fetching leads:', error);
     } finally {
       setLeadsLoading(false);
+    }
+  };
+
+  const fetchPayments = async () => {
+    setPaymentsLoading(true);
+    try {
+      const res = await fetch('/api/payment');
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data.transactions || []);
+        setPaymentCount(data.count || 0);
+        setTotalRevenue(
+          (data.transactions || []).reduce(
+            (sum: number, payment: any) => sum + Number(payment.amount),
+            0
+          )
+        );
+      } else {
+        console.error('Failed to load payments');
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+    } finally {
+      setPaymentsLoading(false);
     }
   };
 
@@ -196,6 +226,20 @@ export default function AdminDashboard() {
             loading={leadsLoading}
           />
           <StatsCard
+            title="Payments"
+            value={paymentCount}
+            icon={<CreditCard className="w-5 h-5" />}
+            color="cyan"
+            loading={paymentsLoading}
+          />
+          <StatsCard
+            title="Revenue"
+            value={totalRevenue}
+            icon={<TrendingUp className="w-5 h-5" />}
+            color="rose"
+            loading={paymentsLoading}
+          />
+          <StatsCard
             title="Available"
             value={stats.availableProperties}
             icon={<CheckCircle className="w-5 h-5" />}
@@ -235,6 +279,13 @@ export default function AdminDashboard() {
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Leads
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments" 
+                className="bg-transparent border-b-2 border-transparent data-[state=active]:bg-transparent data-[state=active]:text-white rounded-none pb-4 px-0 text-white/50 hover:text-white/80 transition-all"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Payments
               </TabsTrigger>
             
             </TabsList>
@@ -280,6 +331,51 @@ export default function AdminDashboard() {
                 cancelLabel="Cancel"
                 onConfirm={handleDeleteLeadConfirm}
               />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payments" className="mt-0 outline-none">
+            <div className="max-w-6xl mx-auto">
+              {paymentsLoading ? (
+                <div className="text-center py-8 text-white/70">
+                  Loading payment records...
+                </div>
+              ) : payments.length === 0 ? (
+                <div className="text-center py-8 text-white/70">
+                  No payment data available yet.
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+                  <div className="grid grid-cols-6 gap-4 bg-white/5 px-6 py-4 text-xs uppercase tracking-[0.2em] text-white/60">
+                    <div className="col-span-2">Property</div>
+                    <div>Amount</div>
+                    <div>Type</div>
+                    <div>Payer</div>
+                    <div>Date</div>
+                  </div>
+                  <div className="divide-y divide-white/10">
+                    {payments.map((payment) => (
+                      <div key={payment.transactionId} className="grid grid-cols-6 gap-4 px-6 py-4 text-sm text-white/80">
+                        <div className="col-span-2">
+                          {payment.propertyName || '—'}
+                        </div>
+                        <div>
+                          {payment.amount} {payment.currency}
+                        </div>
+                        <div>
+                          {payment.paymentType === 'installment' ? 'Installment' : 'Full'}
+                        </div>
+                        <div>
+                          {payment.payerName}
+                        </div>
+                        <div>
+                          {new Date(payment.timestamp).toLocaleDateString('en-US')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

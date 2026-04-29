@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { paymentFormSchema, PaymentFormData } from '@/lib/payment-validation';
@@ -31,7 +31,7 @@ import { motion } from 'framer-motion';
 interface PaymentFormProps {
   amount: number;
   currency?: string;
-  onSuccess?: (data: PaymentFormData) => void;
+  onSuccess?: (data: PaymentFormData, paidAmount: number) => void;
   onCancel?: () => void;
 }
 
@@ -44,6 +44,7 @@ export default function PaymentForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [cardNumberDisplay, setCardNumberDisplay] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentFormSchema),
@@ -58,6 +59,7 @@ export default function PaymentForm({
       billingZipCode: '',
       propertyName: '',
       paymentType: 'full',
+      paymentAmount: amount.toString(),
       installmentAmount: '',
     },
   });
@@ -92,27 +94,65 @@ export default function PaymentForm({
   };
 
   const paymentType = form.watch('paymentType');
+  const paymentAmount = form.watch('paymentAmount');
   const installmentAmount = form.watch('installmentAmount');
   const displayAmount =
     paymentType === 'installment' && installmentAmount
       ? installmentAmount
-      : amount.toString();
+      : paymentAmount || amount.toString();
+  const amountToPay =
+    paymentType === 'installment' && installmentAmount
+      ? Number(installmentAmount)
+      : paymentAmount
+      ? Number(paymentAmount)
+      : amount;
+
+  useEffect(() => {
+    if (paymentType === 'full') {
+      form.setValue('paymentAmount', amount.toString());
+    }
+  }, [amount, paymentType, form]);
 
   const onSubmit = async (data: PaymentFormData) => {
+    setErrorMessage(null);
     setIsProcessing(true);
+    let success = false;
 
-    await new Promise((resolve) => setTimeout(resolve, 1800));
+    try {
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: amountToPay,
+          currency,
+          paymentData: data,
+        }),
+      });
 
-    setIsProcessing(false);
-    setIsSuccess(true);
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.error || 'Payment failed');
+      }
 
-    onSuccess?.(data);
+      await response.json();
+      success = true;
+      setIsSuccess(true);
+      onSuccess?.(data, amountToPay);
+    } catch (error: any) {
+      setErrorMessage(error?.message || 'Payment failed.');
+    } finally {
+      setIsProcessing(false);
+    }
 
-    setTimeout(() => {
-      setIsSuccess(false);
-      form.reset();
-      setCardNumberDisplay('');
-    }, 3000);
+    if (success) {
+      setTimeout(() => {
+        setIsSuccess(false);
+        form.reset();
+        setCardNumberDisplay('');
+      }, 3000);
+    }
   };
 
   if (isSuccess) {
@@ -252,8 +292,31 @@ export default function PaymentForm({
                 )}
               />
 
-              {/* Installment Amount */}
-              {form.watch('paymentType') === 'installment' && (
+              {paymentType === 'full' ? (
+                <FormField
+                  control={form.control}
+                  name="paymentAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white/80">
+                        Total Amount
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Enter total amount"
+                          disabled={isProcessing}
+                          {...field}
+                          className="h-12 rounded-2xl bg-white/5 border-white/10 text-white"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
                 <FormField
                   control={form.control}
                   name="installmentAmount"
@@ -264,7 +327,10 @@ export default function PaymentForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g. 1200"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Enter installment amount"
                           disabled={isProcessing}
                           {...field}
                           className="h-12 rounded-2xl bg-white/5 border-white/10 text-white"
@@ -446,6 +512,12 @@ export default function PaymentForm({
               </Alert>
 
               {/* Actions */}
+              {errorMessage && (
+                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+                  {errorMessage}
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 <Button
                   type="submit"
